@@ -1,2 +1,2 @@
 # Udacity
-For learning full-stack development
+For learning full-stack development. Aw yeah!
