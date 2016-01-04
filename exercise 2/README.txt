@@ -5,7 +5,7 @@ Version 1.0
 This application allows interactivity with a PostgreSQL tournament database
 through python methods. Let the program take care of the sql for you as you
 manage a swiss pairing tournament for games like PokemonTCG and Warhammer!
-* Accelerated swiss pairings not supported
+* Accelerated swiss pairings now supported!
 
 The zip folder contains the following files.
 -------------------------------------------

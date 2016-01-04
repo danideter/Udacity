@@ -5,54 +5,80 @@
 
 import psycopg2
 
-
 def connect():
-    """Connect to the PostgreSQL database.  Returns a database connection."""
+    """Returns a database connection."""
     return psycopg2.connect("dbname=tournament")
+
+
+class DB:
+
+    def __init__(self, db_con_str="dbname=tournament"):
+        """Connect to database upon initialization"""
+        self.conn = psycopg2.connect(db_con_str)
+
+    def cursor(self):
+        """Return the current cursor of the database"""
+        return self.conn.cursor();
+
+    def close(self, conn):
+        """Closes the current database connection
+
+        Args:
+          conn: the dictionary returned from BD().execute(). It should contain
+          a conn and cursor. If there is no current cursor, it should equal
+          None"""
+        # Close cursor
+        if conn["cur"] != None:
+            # Make database changes persistent and close cursor
+            conn["conn"].commit()
+            conn["cur"].close()
+        # Close databaae
+        conn["conn"].close()
+
+    def execute(self, query, close=True):
+        # Create a cursor
+        cur = self.cursor()
+        # Execute sql -- the meat of the function
+        cur.execute(query)
+        # Define connection parameters
+        parm = {"conn": self.conn, "cur": cur if not close else None}
+        if close:
+            # Make database changes persistent
+            self.conn.commit()
+            self.close(parm)
+        # Return the connection and cursor to fetch rows
+        return parm
 
 
 def deleteMatches():
     """Remove all the match records from the database."""
-    # Create connection to database
-    conn = connect()
-    cur = conn.cursor()
-    # Execute sql -- the meat of the function
-    cur.execute("DELETE "
-                "FROM matches;")
-    # Make database changes persistent
-    conn.commit()
-    # Close databaae
-    cur.close()
-    conn.close()
-    
+    # Set up query
+    query = ("DELETE "
+            "FROM matches; ")
+    # Execute query
+    DB().execute(query)
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
-    # Create connection to database
-    conn = connect()
-    cur = conn.cursor()
-    # Execute sql -- the meat of the function
-    cur.execute("DELETE "
-                "FROM players; ")
-    # Make database changes persistent
-    conn.commit()
-    # Close databaae
-    cur.close()
-    conn.close()
+    # Set up query
+    query = ("DELETE "
+            "FROM players; ")
+    # Execute query
+    DB().execute(query)
+    
 
 def countPlayers():
     """Returns the number of players currently registered."""
-    conn = connect()
-    cur = conn.cursor()
-    # Execute sql -- the meat of the function
-    cur.execute("SELECT COUNT(id) "
-                "FROM players; ")
+    # Set up query
+    query = ("SELECT COUNT(id) "
+            "FROM players; ")
+    # Execute query and keep connection open
+    conn = DB().execute(query, False)
     # Define output
-    count = cur.fetchone()[0]
+    count = conn["cur"].fetchone()[0]
     # Close databaae
-    cur.close()
-    conn.close()
+    DB().close(conn)
     # Returns a row from the query as a python object
     return count
 
@@ -66,18 +92,11 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
-    # Create connection to database
-    conn = connect()
-    cur = conn.cursor()
-    # Execute sql -- the meat of the function
-    name = name.replace("'","''")
-    cur.execute("INSERT INTO players (name) "
-                "VALUES('" + name + "');")
-    # Make database changes persistent
-    conn.commit()
-    # Close databaae
-    cur.close()
-    conn.close()
+    # Set up query
+    query = ("INSERT INTO players (name) "
+             "VALUES('%s');" % (name.replace("'","''")))
+    # Execute query
+    DB().execute(query)
 
 
 def playerStandings():
@@ -93,42 +112,16 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    # Create connection to database
-    conn = connect()
-    cur = conn.cursor()
-    # Execute sql -- the meat of the function
-    # Is there a more elegant solution besides two joins
-    cur.execute("SELECT "
-                "  p.id AS id, "
-                "  p.name AS name, "
-                "  CASE WHEN w.wins IS NULL THEN 0 ELSE w.wins END AS wins, "
-                # Combines wins and losses to find mathes played
-                "  CASE WHEN l.losses IS NULL THEN 0 ELSE l.losses END + "
-                "  CASE WHEN w.wins IS NULL THEN 0 ELSE w.wins END AS rounds "
-                "FROM "
-                "  (SELECT id, name "
-                "  FROM players) AS p "
-                # Find player's wins and join on id
-                "LEFT JOIN "
-                "  (SELECT winner, COUNT(winner) AS wins "
-                "  FROM matches "
-                "  GROUP BY winner ) AS w "
-                "ON w.winner = p.id "
-                # Find player's losses and join on id
-                "LEFT JOIN "
-                "  (SELECT loser, COUNT(loser) AS losses "
-                "  FROM matches "
-                "  GROUP BY loser ) AS l "
-                "ON l.loser = p.id "
-                "ORDER BY wins; ")
-    # Make database changes persistent
-    conn.commit()
+    # Set up query
+    query = ("SELECT * "
+             "FROM standings ")
+    # Execute query
+    conn = DB().execute(query, False)
     # Define output
-    out = cur.fetchall()
+    out = conn["cur"].fetchall()
     # Close databaae
-    cur.close()
-    conn.close()
-    # Returns a row from the query as a python object
+    DB().close(conn)
+    # Returns standings
     return out
 
 
@@ -139,17 +132,11 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
-    # Create connection to database
-    conn = connect()
-    cur = conn.cursor()
-    # Execute sql -- the meat of the function
-    cur.execute("INSERT INTO matches (winner, loser) "
-                "VALUES(" + str(winner) + ", " + str(loser) + ");")
-    # Make database changes persistent
-    conn.commit()
-    # Close databaae
-    cur.close()
-    conn.close()
+    # Set up query
+    query = ("INSERT INTO matches (winner, loser) "
+             "VALUES(%d, %d);" % (winner, loser))
+    # Execute query
+    DB().execute(query)
  
  
 def swissPairings():
@@ -167,52 +154,15 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
-    # Create connection to database
-    conn = connect()
-    cur = conn.cursor()
-    # Execute sql -- the meat of the function
-    cur.execute("SELECT a.id, a.name, b.id, b.name "
-                # Find position based on wins
-                "FROM "
-                "  (SELECT p.id AS id, p.name AS name, "
-                "  CASE WHEN w.wins IS NULL THEN 0 ELSE w.wins END AS wins, "
-                "  row_number() OVER (ORDER BY wins DESC) AS position "
-                "  FROM "
-                "    (SELECT id, name "
-                "    FROM players) AS p "
-                # Find player's wins and join on id
-                "  LEFT JOIN "
-                "    (SELECT winner, COUNT(winner) AS wins "
-                "    FROM matches "
-                "  GROUP BY winner ) AS w "
-                "  ON w.winner = p.id) AS a "
-                # Join on self, but with position - 1
-                # Tried looking up macros in psql, but couldn't find much
-                # documentation for script expansion?
-                "INNER JOIN "
-                "  (SELECT p.id AS id, p.name AS name, "
-                "  CASE WHEN w.wins IS NULL THEN 0 ELSE w.wins END AS wins, "
-                "  row_number() OVER (ORDER BY wins DESC) - 1 AS position "
-                "  FROM "
-                "    (SELECT id, name "
-                "    FROM players) AS p "
-                # Find player's wins and join on id
-                "  LEFT JOIN "
-                "    (SELECT winner, COUNT(winner) AS wins "
-                "    FROM matches "
-                "  GROUP BY winner ) AS w "
-                "  ON w.winner = p.id) AS b "
-                "ON a.position = b.position "
-                # Eliminate even numbered positions to remove double bookings 
-                "WHERE a.position % 2 != 0 ")
-    # Make database changes persistent
-    conn.commit()
+    # Set up query
+    query = ("SELECT * "
+             "FROM pairings ")
+    # Execute query
+    conn = DB().execute(query, False)
     # Define output
-    out = cur.fetchall()
+    out = conn["cur"].fetchall()
     # Close databaae
-    cur.close()
-    conn.close()
-    # Returns a row from the query as a python object
+    DB().close(conn)
+    # Returns pairings
     return out
-
 
