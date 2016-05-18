@@ -1,4 +1,4 @@
---sql for badmoviescience.net
+--sql for badmoviescience
 
 DROP DATABASE IF EXISTS catalogdb;
 CREATE DATABASE catalogdb;
@@ -6,48 +6,50 @@ CREATE DATABASE catalogdb;
 
 CREATE TABLE users (
 	id	SERIAL PRIMARY KEY,
-	username 	VARCHAR NOT NULL
+	email VARCHAR NOT NULL
 );
 
-CREATE TABLE movie (
+CREATE TABLE genres (
+	id	SERIAL PRIMARY KEY,
+	name VARCHAR NOT NULL,
+	description VARCHAR
+);
+
+CREATE TABLE movies (
 	id	SERIAL PRIMARY KEY,
 	title VARCHAR NOT NULL,
-	poster VARCHAR NOT NULL
-);
-
-CREATE TABLE genre (
-	id	SERIAL PRIMARY KEY,
-	movie_id INT REFERENCES movie(id),
-	name VARCHAR NOT NULL,
-	description VARCHAR NOT NULL
+	genre INT REFERENCES genres(id),
+	poster VARCHAR
 );
 
 CREATE TABLE science (
 	id	SERIAL PRIMARY KEY,
 	field VARCHAR NOT NULL,
 	description VARCHAR NOT NULL,
-	image
+	image VARCHAR
 );
 
 CREATE TABLE content (
 	id	SERIAL PRIMARY KEY,
-	movie INT REFERENCES movie(id),
-	flaw INT REFERENCES science(id),
+	author INT REFERENCES users(id),
+	movie INT REFERENCES movies(id),
+	science INT REFERENCES science(id),
 	description VARCHAR NOT NULL
 );
 
-CREATE VIEW latest_content AS
+CREATE VIEW view_content AS
 	SELECT 
 		c.id AS id,
+		c.author AS author,
 		c.movie AS movie_id,
-		m.name AS movie_name,
-		c.flaw AS science_id,
+		m.title AS movie_name,
+		c.science AS science_id,
 		s.field AS science,
 		c.description AS description
 	FROM content AS c
-	INNER JOIN movie AS m
+	INNER JOIN movies AS m
 	ON c.movie = m.id
 	INNER JOIN science AS s
-	ON c.flaw = s.id
-	ORDER BY c.id
-	LIMIT 5;
+	ON c.science = s.id
+	ORDER BY c.id;
+	

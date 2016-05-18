@@ -1,0 +1,55 @@
+<NotepadPlus>
+    <Project name="catalog">
+        <Folder name="static">
+            <Folder name="css">
+                <File name="static\css\main.css" />
+            </Folder>
+            <Folder name="html">
+                <Folder name="views">
+                    <File name="static\html\views\home.html" />
+                    <File name="static\html\views\score.html" />
+                    <File name="static\html\views\directory.html" />
+                    <File name="static\html\views\movie.html" />
+                    <File name="static\html\views\science.html" />
+                    <File name="static\html\views\scienceDirectory.html" />
+                    <File name="static\html\views\genreDirectory.html" />
+                    <File name="static\html\views\genre.html" />
+                    <File name="static\html\views\user.html" />
+                </Folder>
+            </Folder>
+            <Folder name="js">
+                <Folder name="controllers">
+                    <File name="static\js\controllers\homeController.js" />
+                    <File name="static\js\controllers\mainController.js" />
+                    <File name="static\js\controllers\routeController.js" />
+                    <File name="static\js\controllers\scoreController.js" />
+                </Folder>
+                <Folder name="directives">
+                    <Folder name="comment">
+                        <File name="static\js\directives\comment\comment.html" />
+                        <File name="static\js\directives\comment\comment.js" />
+                        <File name="static\js\directives\comment\commentController.js" />
+                        <File name="static\js\directives\comment\editcomment.html" />
+                    </Folder>
+                    <Folder name="navigation">
+                        <File name="static\js\directives\navigation\navigation.html" />
+                        <File name="static\js\directives\navigation\navigation.js" />
+                    </Folder>
+                </Folder>
+                <File name="static\js\app.js" />
+                <File name="static\js\backend.js" />
+            </Folder>
+            <Folder name="resources">
+                <File name="static\resources\bmsoffline.png" />
+                <File name="static\resources\bmsavator.png" />
+            </Folder>
+        </Folder>
+        <Folder name="templates">
+            <File name="templates\index.html" />
+        </Folder>
+        <File name="catalog.py" />
+        <File name="catalog.sql" />
+        <File name="catalog_workspace" />
+        <File name="README.txt" />
+    </Project>
+</NotepadPlus>

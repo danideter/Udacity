@@ -1,0 +1,17 @@
+<div layout-padding>
+	<span layout="row" layout-align="center center">
+		<md-button class="md-accent" ng-if="movieshow"
+		href="#/movie/{[{comment[schema.movie_id]}]}">
+		{[{comment[schema.movie_name]}]}</md-button>
+		<span ng-if="movieshow">-</span>
+		<md-button class="md-accent" ng-if="scienceshow"
+		href="#/science/{[{comment[schema.science_id]}]}">{[{comment[schema.science]}]}</md-button>
+		<span ng-if="scienceshow">-</span>
+		<span layout-padding>{[{comment[schema.description]}]}</span>
+		<md-button ng-if="comment[schema.author]==currentuser" class="md-accent md-fab md-mini"
+			ng-click="cmmtCtrl.editComment($event, comment, schema, science)" flex="none">
+			<md-icon>mode_edit</md-icon>
+			<md-tooltip md-direction="bottom">Edit</md-tooltip>
+		</md-button>
+	</span>
+</div>

@@ -1,0 +1,11 @@
+<div flex layout-margin layout="column">
+	<md-card>
+		<md-card-content>
+			<h2>Film Directory</h2>
+			<md-button class="md-accent" ng-repeat="movie in directory.routeData.movies" 
+				href="#/movie/{[{movie[directory.routeData.schema.id]}]}">
+				{[{movie[directory.routeData.schema.title]}]}
+			</md-button>
+		</md-card-content>
+	</md-card>
+</div>

@@ -1,0 +1,26 @@
+<div flex layout-margin layout="column">
+	<md-card>
+		<md-card-content>
+			<h2>{[{comments.routeData.movie[comments.routeData.movieSchema.title]}]}</h2>
+			<!-- To implement another day>
+			<p>{[{comments.routeData.movie[comments.routeData.movieSchema.genre]}]}</p-->
+		</md-card-content>
+	</md-card>
+	<md-card>
+		<md-list>
+			<md-list-item flex layout-align="center center" ng-repeat="comment in comments.routeData.comment">
+				<md-whiteframe class="md-whiteframe-1dp" flex="85" layout>
+					<comment movieshow=false scienceshow=true comment=comment 
+						schema=comments.routeData.commentSchema currentuser=mainCtrl.user.id
+						science=mainCtrl.fieldsInfo></comment>
+				</md-whiteframe>
+			</md-list-item>
+			<md-list-item ng-if="comments.routeData.comment.length == 0" layout-padding>
+				<div>There are no comments for this movie. Be the first!</div>
+				<div flex layout="row" layout-align="center center">
+					<md-button class="md-accent md-hue-2 md-raised" href="#/score">Score</md-button>
+				</div>
+			</<md-list-item>
+		</md-list>
+	</md-card>
+</div>

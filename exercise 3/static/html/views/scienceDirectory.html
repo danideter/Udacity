@@ -1,0 +1,14 @@
+<div flex layout-margin layout="column">
+	<md-card>
+		<md-card-content>
+			<h2>Film Directory</h2>
+			<div ng-repeat="field in science.routeData.science">
+				<md-button href="#/science/{[{field[science.routeData.schema.id]}]}">
+					<h3>{[{field[science.routeData.schema.field]}]}</h3>
+				</md-button>
+				<p>{[{field[science.routeData.schema.description]}]}</p>
+				<md-divider ng-if="!$last"></md-divider>
+			</div>
+		</md-card-content>
+	</md-card>
+</div>

@@ -1,0 +1,85 @@
+<div flex layout-margin layout="column">
+	<md-card ng-if="mainCtrl.loggedIn">
+		<md-card-content>
+			<form name="scoreForm" ng-if="!score.submitting && !score.submitted" layout-padding>
+			   <h2 flex>Movie Science Score Card</h2>
+			   <!-- Start with movie --> 
+			   <div flex>
+					<md-autocomplete required="true" md-input-name="movie"
+						md-selected-item="selectedMovie" md-search-text="searchMovie" 
+						md-items="item in score.searchMovies(searchMovie, score)" md-item-text="item[score.movieSchema.title]"
+						placeholder="movie title">
+						<md-item-template>
+							<span md-highlight-text="searchMovie"  md-highlight-flags="^i">{{item[score.movieSchema.title]}}</span>
+						</md-item-template>
+						<md-not-found>
+							No movies matching "{{searchMovie}}" were found.
+						</md-not-found>
+						<div ng-messages="scoreForm.movie.$error">
+							<div ng-message="required">This field is required</div>
+						</div>
+					</md-autocomplete>
+				</div>
+				<div flex>
+					<!-- Then with science -->
+					<md-autocomplete required="true" md-input-name="science" 
+						md-selected-item="selectedScience" md-search-text="searchScience" 
+						md-items="item in score.searchFields(searchScience, mainCtrl.fieldsInfo)" md-item-text="item.name"
+						placeholder="science field">
+						<md-item-template>
+							<span md-highlight-text="searchMovie"  md-highlight-flags="^i">{{item.name}}</span>
+						</md-item-template>
+						<md-not-found>
+							No fields matching "{{searchScience}}" were found.
+						</md-not-found>
+						<div ng-messages="scoreForm.science.$error">
+							<div ng-message="required">This field is required</div>
+						</div>
+					</md-autocomplete>
+				</div>
+				<div flex>
+					<md-input-container class="md-block">
+						<label>Flaw</label>
+						<textarea name="comment" ng-model="comment" required md-maxlength="255"></textarea>
+						<div ng-messages="scoreForm.comment.$error" ng-show="scoreForm.comment.$dirty">
+							<div ng-message="required">Required</div>
+							<div ng-message="md-maxlength">Please keep this short and to the point. This isn't fiction.</div>
+						</div>
+					</md-input-container>
+				</div>
+				<div flex layout="row" layout-align="end center">
+					<span flex></span>
+					<md-button class="md-accent md-raised" ng-click="score.postComment(mainCtrl.user.id, selectedMovie, selectedScience, comment, score)" 
+						ng-disabled="scoreForm.$invalid || !selectedMovie || !selectedScience">Submit</md-button>
+				</div>
+			</form>
+			<div ng-if="score.submitting" layout-align="center center">
+				<p>Submitting comment...<p>
+				<md-progress-circular md-mode="indeterminate" class="md-accent"></md-progress-circular>
+			</div>
+			<div ng-if="!score.submitting && score.submitted">
+				<h2>Comment Submitted!</h2>
+				<p>Your comment will look like this. Click <md-icon>mode_edit</md-icon> to edit or delete.</p>
+				<div flex layout="row" layout-align="center center">
+					<md-whiteframe class="md-whiteframe-1dp" flex="85" layout>
+						<comment movieshow=true scienceshow=true comment=score.submittedComment.comment 
+						schema=score.submittedComment.schema currentuser=mainCtrl.user.id></comment>
+					</md-whiteframe>
+				</div>
+				<p></p>
+				<div flex layout="row" layout-align="end center">
+					<span flex></span>
+					<md-button class="md-accent md-raised" ng-click="score.reload()">Score another!</md-button>
+				</div>
+			</div>
+		</md-card-content>
+	</md-card>
+	<md-card ng-if="!mainCtrl.loggedIn">
+		<p layout-padding>Please use the directory 
+			<md-button class="md-fab md-primary md-hue-2" hide-gt-md 
+				layout-align="center center" 
+				ng-click="mainCtrl.sidenavOpen = !mainCtrl.sidenavOpen">
+				<md-icon>menu</md-icon>
+			</md-button> and log in to score science.</p>
+	</md-card>
+</div>

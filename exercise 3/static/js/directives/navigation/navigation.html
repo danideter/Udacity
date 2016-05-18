@@ -1,0 +1,14 @@
+<div layout="column" layout-align="center">
+	<div ng-repeat="item in menu">
+		<div layout="row">
+			<md-button class="md-raised md-primary" flex="grow" href={{item.route}}>{{item.name}}</md-button>
+			<md-button ng-if="item.children.length > 0" class="md-fab md-mini md-primary" flex="noshrink">
+				<md-icon ng-show="item.show" ng-click="item.show = !item.show">arrow_drop_down</md-icon>
+				<md-icon ng-hide="item.show" ng-click="item.show = !item.show">arrow_drop_up</md-icon>
+			</md-button>
+		</div>
+		<div flex-offset="10" layout="column" layout-align="center" ng-show="item.show" ng-if="item.children">
+			<navigation menu="item.children"></navigation> 
+		</div> 
+	</div>
+<div>

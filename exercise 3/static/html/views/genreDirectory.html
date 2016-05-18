@@ -1,0 +1,14 @@
+<div flex layout-margin layout="column">
+	<md-card>
+		<md-card-content>
+			<h2>Genres Directory</h2>
+			<div ng-repeat="genre in genres.routeData.genres">
+				<md-button href="#/genres/{[{genre[genres.routeData.schema.id]}]}">
+					<h3>{[{genre[genres.routeData.schema.name]}]}</h3>
+				</md-button>
+				<p>{[{genre[genres.routeData.schema.description]}]}</p>
+				<md-divider ng-if="!$last"></md-divider>
+			</div>
+		</md-card-content>
+	</md-card>
+</div>

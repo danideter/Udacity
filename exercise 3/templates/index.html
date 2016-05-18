@@ -3,23 +3,91 @@
 		<!-- Pretty pretty css -->
 		<link href="css/main.css" rel="stylesheet" />
 		<!-- Angular Material style sheet -->
-		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.0.0/angular-material.min.css"/>
+		<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/angular_material/1.0.0/angular-material.min.css"/>
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 		
 		<!-- Javascript magic -->
 		<!-- Angular Material requires Angular.js Libraries -->
-		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
-		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-animate.min.js"></script>
-		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-aria.min.js"></script>
-		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-messages.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-animate.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-aria.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-messages.min.js"></script>
+		<!-- Include the AngularJS routing library -->
+		<script src="//code.angularjs.org/1.4.8/angular-route.min.js"></script>
 		<!-- Angular Material Library -->
-		<script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.0.0/angular-material.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angular_material/1.0.0/angular-material.min.js"></script>
+		<!-- Google OAuth -->
+		<meta name="google-signin-client_id" content="514418218462-4g3jcfq7dnpaorj2bls6n9enm9nmf9g2.apps.googleusercontent.com">
+		<script src="https://apis.google.com/js/platform.js?" async defer></script>
 	</head>
-	<body ng-app="BadMovieScience">
+	<body ng-app="BadMovieScience" ng-controller="MainController as mainCtrl">
 		<div>
-			Testing testing 1...2...3...
+			<md-toolbar class="md-menu-toolbar" layout-align="center center">
+				<md-button href="#/">
+					<md-toolbar class="md-menu-toolbar" layout-align="center center"> 
+						Bad Movie Science 
+					</md-toolbar>
+				</md-button>
+			</md-toolbar>
+			<md-toolbar class="md-accent md-hue-3 md-whiteframe-2dp" layout="row">
+				<md-button class="md-fab md-mini md-primary md-hue-2" hide-gt-md layout-align="center center" flex="none" ng-click="mainCtrl.sidenavOpen = !mainCtrl.sidenavOpen">
+					<md-icon>menu</md-icon>
+				</md-button>
+				<div layout="row" layout-align="center center" flex>
+					<md-button class="md-primary md-hue-2 md-raised" href="#/score">Score</md-button>
+					<md-button class="md-primary md-hue-2 md-raised" href="#/science/{[{mainCtrl.randomScience}]}">Random Science</md-button>
+					<md-button class="md-primary md-hue-2 md-raised" href="#/movie/{[{mainCtrl.randomMovie}]}">Random Media</md-button>
+				</div>
+			</md-toolbar>
+			<div layout="row">
+				<md-sidenav class="md-sidenav-left" md-is-open="mainCtrl.sidenavOpen" md-is-locked-open="$mdMedia('gt-md')">
+					<div>
+						<md-toolbar>
+							<h1 class="md-toolbar-tools" layout-align="center center">Directory</h1>
+						</md-toolbar>
+						<div layout="column" layout-align="center">
+							<md-list class="md-dense">
+								<md-list-item ng-if="mainCtrl.loggedIn" class="md-3-line" href="#/user/{[{mainCtrl.user.id}]}">
+									<img ng-src="{[{mainCtrl.user.photo}]}" class="md-avatar" alt="{[{mainCtrl.user.name}]}" />
+									<div class="md-list-item-text" layout="column">
+										<h4>{[{ mainCtrl.user.name }]}</h4>
+										<p>Movie Scientist Ph.D.</p>
+										<md-button class="md-primary" ng-click="mainCtrl.logOut()">
+											Log out
+										</md-button>
+									</div>
+								</md-list-item>
+								<md-list-item ng-show="!mainCtrl.loggedIn" class="md-2-line">
+									<img ng-src="/resources/bmsoffline.png" class="md-avatar" alt="offline" />
+									<div class="md-list-item-text">
+										<div id="my-signin2"></div>
+									</div>
+								</md-list-item>
+								<md-divider ></md-divider>
+							</md-list>
+							<navigation layout="column" layout-align="center" menu="mainCtrl.menu"></navigation>
+						</div>
+					</div>
+				</md-sidenav>
+				<md-content flex class="md-primary md-hue-2">
+					<div flex ng-view></div>
+				<md-content>
+			</div>
 		</div>
+			<!--div ng-view></div-->
 		
 		<!-- Modules -->
 		<script src="js/app.js"></script>
+		<!-- Controllers -->
+		<script src="js/controllers/mainController.js"></script>
+		<script src="js/controllers/homeController.js"></script>
+		<script src="js/controllers/routeController.js"></script>
+		<script src="js/controllers/scoreController.js"></script>
+		<script src="js/directives/commentController.js"></script>
+		<!-- Directives -->
+		<script src="js/directives/navigation.js"></script>
+		<script src="js/directives/comment.js"></script>
+		<!-- Services -->
+		<script src="js/backend.js"></script>
 	</body>
 </html>

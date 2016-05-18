@@ -1,0 +1,22 @@
+<div flex layout-margin layout="column">
+	<md-card>
+		<md-card-content>
+			<h2>{[{genresCtrl.routeData.genre[genresCtrl.routeData.genreSchema.name]}]}</h2>
+			<p>{[{genresCtrl.routeData.genre[genresCtrl.routeData.genreSchema.description]}]}</p>
+		</md-card-content>
+	</md-card>
+	<md-card>
+		<md-list>
+			<md-list-item flex ng-repeat="movie in genresCtrl.routeData.movies"
+				ng-if="genresCtrl.routeData.movies.length != 0">
+				<md-button href="#/movie/{[{movie[genresCtrl.routeData.movieSchema.id]}]}">
+					{[{movie[genresCtrl.routeData.movieSchema.title]}]}
+				</md-button>
+			</md-list-item>
+			<md-list-item ng-if="genresCtrl.routeData.movies.length == 0" layout-padding>
+				<div>There are no movies for this genre. 
+				If you beg the developer for this site, maybe she'll finally add a movie database api.</div>
+			</<md-list-item>
+		</md-list>
+	</md-card>
+</div>

@@ -1,0 +1,89 @@
+<md-dialog aria-label="Edit" flex="75" ng-cloak>
+	<md-toolbar class="md-accent md-hue-3 md-whiteframe-2dp">
+		<div class="md-toolbar-tools">
+			<h2>Edit</h2>
+			<span flex></span>
+			<md-button class="md-icon-button" ng-if="!dialCtrl.submitted && !dialCtrl.submitting" 
+				ng-click="dialCtrl.cancel()">
+				<md-icon>clear</md-icon>
+			</md-button>
+		</div>
+	</md-toolbar>
+	<md-dialog-content>
+		<form name="editForm" layout-padding ng-if="!dialCtrl.submitted && !dialCtrl.submitting && !dialCtrl.deleting">
+			<!-- Start with movie --> 
+			<div flex>
+				<md-autocomplete required="true" md-input-name="movie"
+					md-selected-item="dialCtrl.selectedMovie" md-search-text="searchMovie" 
+					md-items="item in dialCtrl.searchMovies(searchMovie, dialCtrl)" md-item-text="item[dialCtrl.movieSchema.title]"
+					placeholder="{[{dialCtrl.comment.movie_name}]}">
+					<md-item-template>
+						<span md-highlight-text="searchMovie"  md-highlight-flags="^i">{{item[dialCtrl.movieSchema.title]}}</span>
+					</md-item-template>
+					<md-not-found>
+						No movies matching "{{searchMovie}}" were found.
+					</md-not-found>
+					<div ng-messages="editForm.movie.$error">
+						<div ng-message="required">This field is required</div>
+					</div>
+				</md-autocomplete>
+			</div>
+			<div flex>
+				<!-- Then with science -->
+				<md-autocomplete required="true" md-input-name="science" 
+					md-selected-item="dialCtrl.selectedScience" md-search-text="searchScience" 
+					md-items="item in dialCtrl.searchFields(searchScience, dialCtrl.science)" md-item-text="item.name"
+					placeholder="{[{dialCtrl.comment.science}]}">
+					<md-item-template>
+						<span md-highlight-text="searchMovie"  md-highlight-flags="^i">{{item.name}}</span>
+					</md-item-template>
+					<md-not-found>
+						No fields matching "{{searchScience}}" were found.
+					</md-not-found>
+					<div ng-messages="editForm.science.$error">
+						<div ng-message="required">This field is required</div>
+					</div>
+				</md-autocomplete>
+			</div>
+			<div flex>
+				<md-input-container class="md-block">
+					<label>Flaw</label>
+					<textarea name="comment" ng-model="dialCtrl.comment.description" 
+					required md-maxlength="255"></textarea>
+					<div ng-messages="editForm.comment.$error" ng-show="editForm.comment.$dirty">
+						<div ng-message="required">Required</div>
+						<div ng-message="md-maxlength">Please keep this short and to the point. This isn't fiction.</div>
+					</div>
+				</md-input-container>
+			</div>
+		</form>
+		<div ng-if="dialCtrl.deleting" layout="column" layout-align="center center" flex>
+			<h3 style="color:white;">Are you sure you want to delete this comment?</h3>
+			<div layout="row" layout-align="center center">
+				<md-whiteframe class="md-whiteframe-1dp" layout>
+					<comment movieshow=true scienceshow=true comment=dialCtrl.originalComment.content 
+						schema=dialCtrl.originalComment.schema currentuser=-1></comment>
+				</md-whiteframe>
+			</div>
+			<div>
+				<md-button ng-click="dialCtrl.cancelDelete(dialCtrl)" class="md-primary md-raised">No</md-button>
+				<md-button ng-click="dialCtrl.deleteComment(dialCtrl)" class="md-warn md-raised">Yes</md-button>
+			</div>
+		</div>
+		<div ng-if="!dialCtrl.submitted && dialCtrl.submitting && !dialCtrl.deleting" layout="column" layout-align="center center" flex>
+			<h3 style="color:white;">Submitting...</h3>
+			<md-progress-circular md-mode="indeterminate" class="md-accent"></md-progress-circular>
+		</div>
+		<div ng-if="dialCtrl.submitted" layout="column" layout-align="center center" flex>
+			<h3 style="color:white;">Action Complete</h3>
+			<md-button ng-click="dialCtrl.confirmSubmit()" class="md-accent md-raised">Close</md-button>
+		</div>
+	</md-dialog-content>
+	<md-dialog-actions layout="row" ng-if="!dialCtrl.submitted && !dialCtrl.submitting && !dialCtrl.deleting">
+	  <md-button ng-click="dialCtrl.confirmDelete(dialCtrl)" class="md-warn md-raised">Delete</md-button>
+	  <span flex></span>
+	  <md-button ng-click="dialCtrl.cancel()" class="md-primary md-raised">Cancel</md-button>
+	  <md-button class="md-accent md-raised"
+		ng-click="dialCtrl.submitComment(dialCtrl.selectedMovie, dialCtrl.selectedScience, dialCtrl)">Submit</md-button>
+	</md-dialog-actions>
+</md-dialog>
