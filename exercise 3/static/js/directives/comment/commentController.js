@@ -64,7 +64,7 @@ app.controller('CommentController', ['$scope', '$mdDialog', '$mdMedia', '$route'
 		$mdDialog.show({
 			controller: DialogController,
 			controllerAs: "dialCtrl",
-			templateUrl: 'js/directives/editcomment.html',
+			templateUrl: 'js/directives/comment/editcomment.html',
 			parent: angular.element(document.body),
 			targetEvent: ev,
 			clickOutsideToClose: false,

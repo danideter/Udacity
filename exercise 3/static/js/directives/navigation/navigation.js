@@ -5,7 +5,7 @@ app.directive("navigation", ['$compile', function ($compile) {
 		},
 		restrict: 'E',
 		replace: true,
-		templateUrl: 'js/directives/navigation.html',
+		templateUrl: 'js/directives/navigation/navigation.html',
 		compile: function (elem) {
 			var contents = elem.contents().remove();
 			return function(scope, el){

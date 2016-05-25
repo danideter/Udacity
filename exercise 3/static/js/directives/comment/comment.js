@@ -12,6 +12,6 @@ app.directive("comment", function () {
 		},
 		restrict: 'E',
 		replace: true,
-		templateUrl: 'js/directives/comment.html',
+		templateUrl: 'js/directives/comment/comment.html',
 	}
 });

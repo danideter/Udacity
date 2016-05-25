@@ -4,6 +4,14 @@ DROP DATABASE IF EXISTS catalogdb;
 CREATE DATABASE catalogdb;
 \c catalogdb; 
 
+/*
+CREATE USER dataloader WITH PASSWORD '1LoadDehData';
+
+GRANT SELECT, UPDATE, INSERT, DELETE 
+ON DATABASE catalogdb
+TO dataloader;
+*/
+
 CREATE TABLE users (
 	id	SERIAL PRIMARY KEY,
 	email VARCHAR NOT NULL

@@ -112,6 +112,11 @@ app.config(function ($routeProvider, $mdThemingProvider, $interpolateProvider) {
 				}
 			}
 		})
+        .when('/score/', {
+			controller: 'ScoreController',
+			controllerAs: 'score',
+			templateUrl: 'html/views/score.html'
+		})
 		.when('/user/:id', {
 			controller: 'RouteController',
 			controllerAs: 'userCtrl',
