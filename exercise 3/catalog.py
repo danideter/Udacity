@@ -1,16 +1,41 @@
 """This is the main server module for the bad movie science web app"""
 
+import bleach
 import json
 import psycopg2
-from flask import Flask
-from flask import render_template
-from flask import request
+import random
+import string
+
+from oauth2client import client, crypt
+
+from flask import Flask, jsonify, render_template, request, session
 
 APP = Flask(__name__, static_folder='static', static_url_path='')
+CLIENT_ID = ("514418218462-4g3jcfq7dnpaorj2bls6n9enm9nmf9g2" +
+             ".apps.googleusercontent.com")
+
+APP.secret_key = 'for SC13NC3! Hahahaha!'
+
 
 def connect():
     """Returns a database connection."""
     return psycopg2.connect("dbname=catalogdb")
+
+
+def check_user(token):
+    try:
+        idinfo = client.verify_id_token(token, CLIENT_ID)
+        return True
+    except crypt.AppIdentityError as e:
+        print e
+        return False
+
+
+def check_session(state, token):
+    if check_user(token) and (session['state'] == state):
+        return True
+    else:
+        return False
 
 
 class DB(object):
@@ -40,12 +65,18 @@ class DB(object):
         # Close databaae
         conn["conn"].close()
 
-    def execute(self, query, close=True):
+    def execute(self, query, close=True, **optional):
         """Connects to psql database and execute specified query"""
         # Create a cursor
         cur = self.cursor()
         # Execute sql -- the meat of the function
-        cur.execute(query)
+        if 'params' in optional:
+            try:
+                cur.execute(query, tuple(optional['params']))
+            except psycopg2.Error as e:
+                print e
+        else:
+            cur.execute(query)
         # Define connection parameters
         parm = {"conn": self.conn, "cur": cur if not close else None}
         if close:
@@ -54,6 +85,22 @@ class DB(object):
             self.close(parm)
         # Return the connection and cursor to fetch rows
         return parm
+
+
+class InvalidUsage(Exception):
+    status_code = 400
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        self.message = message
+        if status_code is not None:
+            self.status_code = status_code
+        self.payload = payload
+
+    def to_dict(self):
+        rv = dict(self.payload or ())
+        rv['message'] = self.message
+        return rv
 
 
 class Setup(object):
@@ -65,13 +112,14 @@ class Setup(object):
     @staticmethod
     def load_genres():
         """Loads sample genres into databse."""
-        genres = ["Comedy", "Drama", "Non-fiction", "Realistic fiction", "Action",
-                  "Romance", "Satire", "Tragedy", "Tragicomedy", "Horror", "Sci-fi"]
+        genres = ["Comedy", "Drama", "Non-fiction", "Realistic fiction",
+                  "Action", "Romance", "Satire", "Tragedy", "Tragicomedy",
+                  "Horror", "Sci-fi"]
         # Setup literary genres
         for value in genres:
             query = ("INSERT INTO genres (name) "
-                     "VALUES('%s');" % (value.replace("'", "''")))
-            DB().execute(query)
+                     "VALUES(%s);")
+            DB().execute(query, params=bleach.clean(value))
 
     @staticmethod
     def load_movies():
@@ -88,15 +136,15 @@ class Setup(object):
             # Find corresponding index in genres.
             # Psql may not match row number with index in GENRES list.
             query = ("SELECT id FROM genres "
-                     "WHERE name = '%s';" % (movies[key].replace("'", "''")))
-            conn = DB().execute(query, False)
+                     "WHERE name = %s;")
+            conn = DB().execute(query, False, params=bleach.clean(movies))
             index = conn["cur"].fetchone()[0]
             DB().close(conn)
             movies[key] = index
             # Insert movies into database
             query = ("INSERT INTO movies (title, genre) "
-                     "VALUES('%s', '%d');" % (key.replace("'", "''"), movies[key]))
-            conn = DB().execute(query)
+                     "VALUES(%s, %s);")
+            conn = DB().execute(query, params=[bleach.clean(key), movies[key]])
 
     @staticmethod
     def load_sciences():
@@ -121,9 +169,8 @@ class Setup(object):
         }
         for key in fields:
             query = ("INSERT INTO science (field, description) "
-                     "VALUES('%s', '%s');" %
-                     (key.replace("'", "''"), fields[key].replace("'", "''")))
-            DB().execute(query)
+                     "VALUES(%s, %s);")
+            DB().execute(query, params=[bleach.clean(key), bleach.clean(fields[key])])
 
     @staticmethod
     def get_db_state():
@@ -148,6 +195,7 @@ class Setup(object):
                 databases[table] = True
         return databases
 
+
 class Comment(object):
     """Comment properties from psql catalog database"""
 
@@ -158,8 +206,7 @@ class Comment(object):
               "movie_name": 3,
               "science_id": 4,
               "science": 5,
-              "description": 6
-             }
+              "description": 6}
 
     def __init__(self):
         pass
@@ -174,19 +221,31 @@ class Comment(object):
                  "WHERE true ")
         if 'params' in optional:
             params = optional['params']
+            filters = []
         if 'id' in params:
-            query += ("AND id = %d " % params['id'])
+            query += ("AND id = %s ")
+            filters.append(params['id'])
         if 'author' in params:
-            query += ("AND author = %d " % params['author'])
+            query += ("AND author = %s ")
+            filters.append(params['author'])
         if 'movie_id' in params:
-            query += ("AND movie_id = %d " % params['movie_id'])
+            query += ("AND movie_id = %s ")
+            filters.append(params['movie_id'])
         if 'science_id' in params:
-            query += ("AND science_id = %d " % params['science_id'])
+            query += ("AND science_id = %s ")
+            filters.append(params['science_id'])
         query += ";"
-        conn = DB().execute(query, False)
+        conn = DB().execute(query, False, params=filters)
         comment = conn["cur"].fetchall()
         DB().close(conn)
         return comment
+
+
+@APP.errorhandler(InvalidUsage)
+def handle_invalid_usage(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
 
 
 @APP.route('/')
@@ -194,16 +253,21 @@ def render():
     """Renders the home page for the app."""
     return render_template('index.html')
 
-@APP.route('/deleteComment', methods=['POST'])
+
+@APP.route('/deleteComment', methods=['DELETE'])
 def delete_comment():
     """Deletes comment from content table."""
     data = json.loads(request.data)
-    query = ("DELETE FROM content WHERE id = %d;" % (data['id']))
-    DB().execute(query)
-    # Make sure comment was submitted to database
-    return json.dumps({
-        'result': 'ok'
-    })
+    if check_session(data['stateid'], data['token']):
+        query = ("DELETE FROM content WHERE id = %s;")
+        DB().execute(query, params=[data['id']])
+        # Make sure comment was submitted to database
+        return json.dumps({
+            'result': 'ok'
+        })
+    else:
+        raise InvalidUsage('User not validated.', status_code=410)
+
 
 @APP.route('/getComments', methods=['POST'])
 def get_comments():
@@ -213,8 +277,8 @@ def get_comments():
     commdb = Comment()
     result = commdb.get_comments(params=data)
     return json.dumps({'comment': result,
-                       'schema': commdb.schema
-                      })
+                       'schema': commdb.schema})
+
 
 @APP.route('/getAppInit', methods=['GET'])
 def get_hierarchy():
@@ -240,6 +304,7 @@ def get_hierarchy():
         'fields': fields
     })
 
+
 @APP.route('/getGenres', methods=['POST'])
 def get_genres():
     """Gets genres from genre fields."""
@@ -247,10 +312,10 @@ def get_genres():
     # Set up movies query
     query = ("SELECT id, name, description FROM genres ")
     if data is not None:
-        query += ("WHERE id = %d " % data)
+        query += ("WHERE id = %s ")
     query += ("ORDER BY name;")
     # Execute query
-    conn = DB().execute(query, False)
+    conn = DB().execute(query, False, params=[data])
     # Define output
     genres = conn["cur"].fetchall()
     DB().close(conn)
@@ -264,6 +329,7 @@ def get_genres():
         }
     })
 
+
 @APP.route('/getGenreMovies', methods=['POST'])
 def get_genre_movies():
     """If genre id is passed, returns all movies with a specific gnere."""
@@ -273,10 +339,10 @@ def get_genre_movies():
     # Set up movies query
     query = ("SELECT id, title, genre FROM movies ")
     if data is not None:
-        query += ("WHERE genre = %d " % data)
+        query += ("WHERE genre = %s ")
     query += ("ORDER BY title;")
     # Execute query
-    conn = DB().execute(query, False)
+    conn = DB().execute(query, False, params=[data])
     # Define output
     movies = conn["cur"].fetchall()
     DB().close(conn)
@@ -289,6 +355,7 @@ def get_genre_movies():
             'genre': 2
         }
     })
+
 
 @APP.route('/getMovies', methods=['POST'])
 def get_movies():
@@ -297,10 +364,10 @@ def get_movies():
     # Set up movies query
     query = ("SELECT id, title, genre FROM movies ")
     if data is not None:
-        query += ("WHERE id = %d " % data)
+        query += ("WHERE id = %s ")
     query += ("ORDER BY title;")
     # Execute query
-    conn = DB().execute(query, False)
+    conn = DB().execute(query, False, params=[data])
     # Define output
     movies = conn["cur"].fetchall()
     DB().close(conn)
@@ -314,13 +381,14 @@ def get_movies():
         }
     })
 
+
 @APP.route('/getRandomPage', methods=['POST'])
 def get_random_page():
     """Finds a random id from a table called specified by the front-end."""
-    data = json.loads(request.data)['table']
+    data = bleach.clean(json.loads(request.data)['table'])
     # Set up movies query
     query = ("SELECT id FROM %s OFFSET FLOOR(RANDOM() * "
-             "(SELECT COUNT(id) FROM %s)) LIMIT 1 ;"  % (data, data))
+             "(SELECT COUNT(id) FROM %s)) LIMIT 1 ;" % (data, data))
     # Execute query
     conn = DB().execute(query, False)
     # Define output
@@ -329,17 +397,21 @@ def get_random_page():
 
     return json.dumps({'id': page_id})
 
+
 @APP.route('/getScience', methods=['POST'])
 def get_science():
     """Gets all or one science field from database."""
-    data = json.loads(request.data)['id']
     # Set up movies query
     query = ("SELECT id, field, description FROM science ")
-    if data is not None:
-        query += ("WHERE id = %d " % data)
-    query += ("ORDER BY field;")
-    # Execute query
-    conn = DB().execute(query, False)
+    try:
+        data = json.loads(request.data)['id']
+        query += ("WHERE id = %s ORDER BY field;")
+        conn = DB().execute(query, False, params=[data])
+    except:
+        query += ("ORDER BY field;")
+        print query
+        conn = DB().execute(query, False)
+    print query
     # Define output
     science = conn["cur"].fetchall()
     DB().close(conn)
@@ -353,52 +425,66 @@ def get_science():
         }
     })
 
+
 @APP.route('/getUser', methods=['POST'])
 def get_user():
     """If user isn't in database, add them. Return id."""
     data = json.loads(request.data)
-    user_email = data['user']
-    # Set up movie query
-    query = ("SELECT id "
-             "FROM users "
-             "WHERE email = '%s';" % user_email.replace("'", "''"))
-    # Execute query
-    conn = DB().execute(query, False)
-    # Define output
-    user_param = conn["cur"].fetchone()
-    DB().close(conn)
-    # If user not in database, add them
-    if user_param == None:
-        # Set up query
-        query2 = ("INSERT INTO users (email) "
-                  "VALUES('%s');" % (user_email.replace("'", "''")))
-        conn = DB().execute(query2)
-        # Rerun initial query to find new id
-        conn = DB().execute(query, False)
+    if ('token' in data) and check_user(data['token']):
+        user_email = data['user']
+        state = ''.join(random.choice(string.ascii_uppercase + string.digits)
+                        for x in xrange(32))
+        session['state'] = state
+        # Set up movie query
+        query = ("SELECT id "
+                 "FROM users "
+                 "WHERE email = %s;")
+        # Execute query
+        conn = DB().execute(query, False, params=[bleach.clean(user_email)])
+        # Define output
         user_param = conn["cur"].fetchone()
         DB().close(conn)
-    return json.dumps({'id': user_param[0]})
+        # If user not in database, add them
+        if user_param is None:
+            # Set up query
+            query2 = ("INSERT INTO users (email) "
+                      "VALUES(%s);")
+            conn = DB().execute(query2, True,
+                                params=[bleach.clean(user_email)])
+            # Rerun initial query to find new id
+            conn = DB().execute(query, False,
+                                params=[bleach.clean(user_email)])
+            user_param = conn["cur"].fetchone()
+            DB().close(conn)
+        return json.dumps({'id': user_param[0], 'csrf': state})
+    else:
+        raise InvalidUsage('User not validated.', status_code=410)
+
 
 @APP.route('/postComment', methods=['POST'])
 def post_comment():
     """Add user generated comment to content table."""
     data = json.loads(request.data)
-    query = ("INSERT INTO content (author, movie, science, description) "
-             "VALUES(%d, %d, %d, '%s') "
-             "RETURNING id;" %
-             (data['author'], data['movie'], data['science'],
-              data['description'].replace("'", "''")))
-    conn = DB().execute(query, False)
-    comment_id = conn["cur"].fetchone()[0]
-    DB().close(conn)
-    # Make sure comment was submitted to database
-    params = {'id': comment_id}
-    check_submit = Comment()
-    result = check_submit.get_comments(params=params)[0]
-    return json.dumps({
-        'comment': result,
-        'schema': check_submit.schema
-    })
+    if check_session(data['stateid'], data['token']):
+        params_submit = ([data['author'], data['movie'], data['science'],
+                          bleach.clean(data['description'])])
+        query = ("INSERT INTO content (author, movie, science, description) "
+                 "VALUES(%s, %s, %s, %s) "
+                 "RETURNING id;")
+        conn = DB().execute(query, False, params=params_submit)
+        comment_id = conn["cur"].fetchone()[0]
+        DB().close(conn)
+        # Make sure comment was submitted to database
+        params = {'id': comment_id}
+        check_submit = Comment()
+        result = check_submit.get_comments(params=params)[0]
+        return json.dumps({
+            'comment': result,
+            'schema': check_submit.schema
+        })
+    else:
+        raise InvalidUsage('User not validated.', status_code=410)
+
 
 @APP.route('/searchMovies', methods=['POST'])
 def search_movies():
@@ -406,9 +492,9 @@ def search_movies():
     data = json.loads(request.data)['query']
     # Set up genres query
     query = ("SELECT id, title, genre FROM movies "
-             "WHERE title ILIKE '%%%s%%' ORDER BY title LIMIT 10;" % (data.replace("'", "''")))
+             "WHERE title ILIKE CONCAT('%%',%s,'%%') ORDER BY title LIMIT 10;")
     # Execute query
-    conn = DB().execute(query, False)
+    conn = DB().execute(query, False, params=[bleach.clean(data)])
     # Define output
     movies = conn["cur"].fetchall()
     DB().close(conn)
@@ -421,20 +507,24 @@ def search_movies():
         }
     })
 
-@APP.route('/updateComment', methods=['POST'])
+
+@APP.route('/updateComment', methods=['PUT'])
 def update_comment():
     """Allow user to update their own comment."""
     data = json.loads(request.data)
-    query = ("UPDATE content "
-             "SET author = %d, movie = %d, science = %d, description = '%s' "
-             "WHERE id = %d;" %
-             (data['author'], data['movie'], data['science'],
-              data['description'].replace("'", "''"), data['id']))
-    DB().execute(query)
-    # Make sure comment was submitted to database
-    return json.dumps({
-        'result': 'ok'
-    })
+    if check_session(data['stateid'], data['token']):
+        params = ([data['author'], data['movie'], data['science'],
+                  bleach.clean(data['description']), data['id']])
+        query = ("UPDATE content "
+                 "SET author = %s, movie = %s, science = %s, description = %s "
+                 "WHERE id = %s;")
+        DB().execute(query, True, params=params)
+        # Make sure comment was submitted to database
+        return json.dumps({
+            'result': 'ok'
+        })
+    else:
+        raise InvalidUsage('User not validated.', status_code=410)
 
 
 if __name__ == '__main__':

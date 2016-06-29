@@ -1,12 +1,21 @@
 app.factory('backend', ['$http', '$q', function($http, $q) {
+ 
+    this.stateId = "";
 
 	return {
+        setOAuthId: function (googleUser) {
+            this.userOAuthId = function() {
+                return googleUser.getAuthResponse().id_token;
+            };
+        },
 		deleteComment: function (ctrl) {
 			$http({ 
 				url: '/deleteComment',
-				method: 'POST',
+				method: 'DELETE',
 				data: {
 					'id': ctrl.comment.id,
+                    'token': this.userOAuthId(),
+                    'stateid': this.stateId,
 				}, 
 				headers: {'Content-Type': 'application/json'}
 					}).success(function(data) {
@@ -21,7 +30,7 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 				url: '/getComments',
 				method: 'POST',
 				data: {
-					'params': params,
+					'params': params
 				}, 
 				headers: {'Content-Type': 'application/json'}
 					}).success(function(data) {
@@ -32,7 +41,7 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 		},
 		getGenres: function(id = null) {
 			var deferred = $q.defer();
-			var data = null;
+			var data = {};
 			
 			if(id != null){
 				data = {'id': id}
@@ -41,7 +50,9 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 			$http({
 				url: '/getGenres',
 				method: "POST",
-				data: {'id': id},
+				data: {
+                    'id': id
+                    },
 				headers: { 'Content-Type': 'application/json' },
 					}).success(function(data) {
 						deferred.resolve(data);
@@ -52,7 +63,7 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 		getGenreMovies: function(id = null) {
 			//Combine with getMovies someday
 			var deferred = $q.defer();
-			var data = null;
+			var data = {};
 			
 			if(id != null){
 				data = {'id': id}
@@ -61,7 +72,9 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 			$http({
 				url: '/getGenreMovies',
 				method: "POST",
-				data: {'id': id},
+				data: {
+                    'id': id
+                    },
 				headers: { 'Content-Type': 'application/json' },
 					}).success(function(data) {
 						deferred.resolve(data);
@@ -145,7 +158,7 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 		},
 		getMovies: function(id = null) {
 			var deferred = $q.defer();
-			var data = null;
+			var data = {};
 			
 			if(id != null){
 				data = {'id': id}
@@ -154,7 +167,9 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 			$http({
 				url: '/getMovies',
 				method: "POST",
-				data: {'id': id},
+				data: {
+                    'id': id
+                    },
 				headers: { 'Content-Type': 'application/json' },
 					}).success(function(data) {
 						deferred.resolve(data);
@@ -168,7 +183,9 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 			$http({
 				url: '/getRandomPage',
 				method: "POST",
-				data: {'table': table},
+				data: {
+                    'table': table,
+                    },
 				headers: { 'Content-Type': 'application/json' },
 					}).success(function(data) {
 						deferred.resolve(data.id);
@@ -178,16 +195,16 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 		},
 		getScience: function(id = null) {
 			var deferred = $q.defer();
-			var data = null;
+			var data = {};
 			
 			if(id != null){
-				data = {'id': id}
+				data['id'] = id
 			}
 			
 			$http({
 				url: '/getScience',
 				method: "POST",
-				data: {'id': id},
+				data: data,
 				headers: { 'Content-Type': 'application/json' },
 					}).success(function(data) {
 						deferred.resolve(data);
@@ -203,7 +220,9 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 					'author': author,
 					'movie': movie,
 					'science': science,
-					'description': description
+					'description': description,
+                    'token': this.userOAuthId(),
+                    'stateid': this.stateId,
 				}, 
 				headers: {'Content-Type': 'application/json'}
 					}).success(function(data) {
@@ -214,17 +233,26 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 		},
 		postUser: function(ctrl){
 			var deferred = $q.defer();
+            var service = this;
 			
 			$http({
 				url: '/getUser',
 				method: "POST",
 				headers: { 'Content-Type': 'application/json' },
-				data: {'user': ctrl.user.email}
+				data: {
+                    'user': ctrl.user.email,
+                    'token': this.userOAuthId(),
+                }
 					}).success(function(data) {
 						ctrl.user.id = data.id;
 						ctrl.loggedIn = true;
+
+                        service.stateId = data.csrf;
+                        
 						deferred.resolve(data);
-			});
+			}).error(function(message) {
+                deferred.resolve(message);
+            });
 			
 			return deferred.promise;
 		},
@@ -235,8 +263,10 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 				url: '/searchMovies',
 				method: "POST",
 				headers: { 'Content-Type': 'application/json' },
-				data: {'query': query}
-					}).success(function(data) {
+				data: {
+                    'query': query,
+                    }
+                    }).success(function(data) {
 						if (!('movieSchema' in ctrl)) {
 							ctrl.movieSchema = data.schema;
 						}
@@ -247,13 +277,15 @@ app.factory('backend', ['$http', '$q', function($http, $q) {
 		updateComment: function (ctrl) {
 			$http({
 				url: '/updateComment',
-				method: 'POST',
+				method: 'PUT',
 				data: {
 					'author': ctrl.comment.author,
 					'movie': ctrl.comment.movie_id,
 					'science': ctrl.comment.science_id,
 					'description': ctrl.comment.description,
 					'id': ctrl.comment.id,
+                    'token': this.userOAuthId(),
+                    'stateid': this.stateId,
 				}, 
 				headers: {'Content-Type': 'application/json'}
 					}).success(function(data) {

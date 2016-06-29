@@ -1,6 +1,6 @@
 app.controller('MainController', 
-	['$scope', '$mdSidenav', '$q', 'backend', 
-	function($scope, $mdSidenav, $q, backend) {
+	['$scope', '$mdSidenav', '$q', '$mdToast', 'backend', 
+	function($scope, $mdSidenav, $q, $mdToast, backend) {
 		
 		var ctrl = this;
 		$scope.ctrl = this;
@@ -41,9 +41,18 @@ app.controller('MainController',
 					name: basicProfile.getName(),
 					photo: basicProfile.getImageUrl(),
 					email: basicProfile.getEmail(),
-					raw: googleUser,
+					raw: googleUser
 				};
-				backend.postUser(ctrl, basicProfile);
+                
+                backend.setOAuthId(googleUser);
+                
+				backend.postUser(ctrl, basicProfile).then(function(message) {
+                   console.log('user logged in'); 
+                }, function(error) {
+                    $mdToast.showSimple(error);
+                });
+                
+                var id_token = googleUser.getAuthResponse().id_token;
 			}
 		}
 		
