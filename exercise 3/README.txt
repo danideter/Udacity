@@ -31,15 +31,19 @@ The zip folder contains the following folders and files.
 How to run the application
 --------------------------
 Python version 2.7.10 or later must be installed on your machine.
-The latest version of postgresql mus also be installed om your machine.
+The latest version of postgresql must also be installed om your machine.
 
 1 - Clone the git repository:
 	$ git clone https://github.com/danideter/Udacity
-1 - In terminal/cmd, navigate to the directory where Udacity/exercise3 is located.
-2 - Open psql and import catalog.sql
-3 - Exit from psql 
-4 - Run the command: python catalog.py
-5 - The website will run on localhost:8080 and the program will populate the
+2 - Clone the git repository: 
+	$ git clone https://github.com/danideter/fullstack-nanodegree-vm
+3 - Place exercise 3 in the vagrant file in fullstack-nanodegree-vm
+4 - Start the vagrant configuration and ssh into it.
+5 - Navigate vagrant/exercise3.
+6 - Open psql and import catalog.sql
+7 - Exit from psql 
+8 - Run the command: python catalog.py
+9 - The website will run on localhost:8080 and the program will populate the
     database with example data if there isn't any.
 
 Copyright: 2016

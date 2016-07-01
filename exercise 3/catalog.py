@@ -72,7 +72,7 @@ class DB(object):
         # Execute sql -- the meat of the function
         if 'params' in optional:
             try:
-                cur.execute(query, tuple(optional['params']))
+                cur.execute(query, tuple(optional['params'],))
             except psycopg2.Error as e:
                 print e
         else:
