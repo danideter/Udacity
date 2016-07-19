@@ -54,6 +54,17 @@ def connect():
 
 
 def startGame(password, players, dice_per_player, dice_sides, wild):
+    """startGame(password, players, dice_per_player, dice_sides, wild)
+        start a game of liar's dice.
+        args:
+            password: the password to access the game *does not do anything yet
+            players: the number of players in the game. Must be greater than or
+                equal to 1.
+            dice_per_plaer: the number of dice per player. Typically 5 for a
+                3-4 player game.
+            dice_sides: the number of sides (or faces) on a die. Typically 6
+            wild: Which side of the dice is considered wild. If no wild wanted,
+            enter 0."""
     """Example of CREATE in sqlAlchemy"""
     session = connect()
     game = Game(password=password, players=players, wild=wild,
@@ -81,6 +92,11 @@ def startGame(password, players, dice_per_player, dice_sides, wild):
 
 
 def getGame(game_id):
+    """gives general info about a game such as what the bid is and who the last
+        bidder was.
+        args:
+            game_id: the id of the game to inspect. Given when the game is
+            started with startGame()"""
     """Example of READ in sqlAlchemy"""
     session = connect()
     game = session.query(Game).filter_by(id=game_id).first()
@@ -91,7 +107,11 @@ def getGame(game_id):
 
 
 def getDice(game_id, player_number):
-    """Gets dice by game id and player number for user ease-of-use"""
+    """gets a player's dice in a particular game
+        args:
+            game_id: the id of the game to inspect. Given when the game is
+                started with startGame()
+            player_number: the turn order of the plater in the game"""
     """Example of JOIN in sqlAlchemy"""
     session = connect()
     dice = (session.query(Dice)
@@ -114,7 +134,12 @@ def raiseBid(game_id, die_face, die_total):
     total increasing. Since this is a test example, there are no checks in
     place to make sure the raise bid isn't more then possible.
     On the other hand, that might be interesting for players not noticing that
-    a bid isn't phyically capable of happening."""
+    a bid isn't phyically capable of happening.
+        args:
+            game_id: the id of the game to inspect. Given when the game is
+                started with startGame()
+            die_face: the face on the die to raise the bid to.
+            die_total: the number of dice to raise the bid to."""
     """Example of UPDATE in sqlAlchemy"""
     session = connect()
     game = session.query(Game).filter_by(id=game_id).first()
@@ -151,6 +176,10 @@ def raiseBid(game_id, die_face, die_total):
 
 
 def callLiar(game_id):
+    """call the last player a liar. This ends the game.
+        args:
+            game_id: the id of the game to inspect. Given when the game is
+                started with startGame()"""
     """For fun :). Call previous player a liar to end game"""
     session = connect()
     game = session.query(Game).filter_by(id=game_id).first()
@@ -182,9 +211,31 @@ def callLiar(game_id):
 
 
 def deleteGame(game_id):
+    """delete a game, never to see it again.
+        args:
+            game_id: the id of the game to inspect. Given when the game is
+                started with startGame()"""
     session = connect()
     game = session.query(Game).filter_by(id=game_id).first()
     print "Deleting game " + str(game.id) + "..."
+    # Delete related items in dice table
+    dice = (session.query(Dice)
+            .join(Player)
+            .join(Game)
+            .filter(Game.id == game_id)
+            .all())
+    for die in dice:
+        session.delete(die)
+        session.commit()
+    # Delete related items in player table
+    players = (session.query(Player)
+               .join(Game)
+               .filter(Game.id == game_id)
+               .all())
+    for player in players:
+        session.delete(player)
+        session.commit()
+    # Finalley delete game
     session.delete(game)
     session.commit()
     engine.dispose()
