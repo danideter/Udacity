@@ -3,14 +3,14 @@ Version 1.0
 ---------------------------------
 
 This application is to test a data structure for udacity's project 4 in the 
-fullstack nano-degree program. This is an alpha of the game and input 
+fullstack nano-degree program. This is an alpha of the game, and input 
 validations are not in place yet.
 
 The zip folder contains the following folders and files.
 -------------------------------------------
 
  1 - liarsDice.py
-     This contains the server side functions to setup and deploy the website.
+     This contains test functions for a liar's dice web app.
 
  2 - README.txt
      This is me. I am the README.txt file.
