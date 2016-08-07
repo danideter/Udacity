@@ -37,12 +37,19 @@ The following methods are available:
 	dice_sides: the number of sides (or faces) on a die. Typically 6
 	wild: Which side of the dice is considered wild. If no wild wanted, enter 0.
 
-* getGame(game_id):
+* getGame(game_id)
 	gives general info about a game such as what the bid is and who the last 
 	bidder was.
 	args:
 		game_id: the id of the game to inspect. Given when the game is started with
 			startGame()
+
+* getDice(game_id, player_number)
+	gets a player's dice in a particular game
+	args:
+		game_id: the id of the game to inspect. Given when the game is started with
+			startGame()
+	player_number: the turn order of the plater in the game
 
 * raiseBid(game_id, die_face, die_total)
 	raise the bid in a game. For this varient of liars dice, either the face value
@@ -54,13 +61,13 @@ The following methods are available:
 		die_face: the face on the die to raise the bid to.
 		die_total: the number of dice to raise the bid to.
 
-* callLiar(game_id):
+* callLiar(game_id)
 	call the last player a liar. This ends the game.
 	args:
 		game_id: the id of the game to inspect. Given when the game is started with
 			startGame()
 
-* deleteGame(game_id):
+* deleteGame(game_id)
 	delete a game, never to see it again.
 	args:
 		game_id: the id of the game to inspect. Given when the game is started with

@@ -151,10 +151,10 @@ def raiseBid(game_id, die_face, die_total):
                "previious bid face.")
     if die_face == game.bid_face and die_total <= game.bid_number:
         valid = False
-        print "Invalid bid: If not raising bid face, must raise bid number"
+        print "Invalid bid: If not raising bid face, must raise bid number."
     if die_total < 1:
         valid = False
-        print "Invalid bid: Die number must be greater than or equal to one"
+        print "Invalid bid: Die number must be greater than or equal to one."
     if valid:
         game.bid_face = die_face
         game.bid_number = die_total
