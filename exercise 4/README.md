@@ -21,18 +21,31 @@ On a player's turn, he or she can call the previous person a liar. If the caller
 is correct, he or she wins. If not, the bidding player wins.
 
 An example game between two players may go as follows:
+
 Dice 3, Faces 4, 1's are Wild 
+
 Bids
+
 Player 1 - face 1, total 1
+
 Player 2 - face 1, total 3
+
 Player 1 - face 2, total 2
+
 Player 2 - face 4, total 1
+
 Player 1 - face 4, total 3
+
 Player 2 - face 4, total 4
+
 Player 1 - Call Liar
+
 Results
+
 2 Dice with face of 4 and 2 Dice with face of 1
+
 Dice Total = 4
+
 Player 2 was telling the truth! Player 2 wins!
 
 
@@ -131,7 +144,7 @@ A version of the game has been deployed to localhost:8080/_ah/api/explorer
     - Stores users and their and provides a link for fice to games.
     - Associated with Game model via KeyProperty.
 
-  - **Dice**
+ - **Dice**
     - Stores a player's dice in a game.
     - Associated with Game model via KeyProperty.
 
