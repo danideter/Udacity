@@ -10,7 +10,12 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
-- kind: Game
+- kind: Dice
   properties:
-  - name: game_over
-  - name: user
+  - name: player
+  - name: face
+
+- kind: GameHistory
+  properties:
+  - name: game
+  - name: turn
