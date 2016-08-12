@@ -4,9 +4,9 @@
 ## Set-Up Instructions:
 1.  Update the value of application in app.yaml to the app ID you have registered
  in the App Engine admin console and would like to use to host your instance of this sample.
-1.  Run the app with the devserver using dev_appserver.py DIR, and ensure it's
+2.  Run the app with the devserver using dev_appserver.py DIR, and ensure it's
  running by visiting the API Explorer - by default localhost:8080/_ah/api/explorer.
-1.  (Optional) Generate your client library(ies) with the endpoints tool.
+3.  (Optional) Generate your client library(ies) with the endpoints tool.
  Deploy your application.
  
  
@@ -16,7 +16,7 @@ Pirate's dice is a game of analyzing and bluffing. It's deceptively simple.
 Each player rolls the same number of dice in a cup. Then, players take turns
 guessing how many dice share the same face value, but there are two catches:
 1.  Guesses must always be increasing in face value or totals
-1.  Players can flat out lie.
+2.  Players can flat out lie.
 On a player's turn, he or she can call the previous person a liar. If the caller
 is correct, he or she wins. If not, the bidding player wins.
 
@@ -49,7 +49,7 @@ Dice Total = 4
 Player 2 was telling the truth! Player 2 wins!
 
 
-A version of the game has been deployed to localhost:8080/_ah/api/explorer
+A version of the game has been deployed to piratesdicegame.appspot.com
 
 ##Files Included:
  - api.py: Contains endpoints and game playing logic.

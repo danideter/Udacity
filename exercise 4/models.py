@@ -7,7 +7,7 @@ from datetime import date
 from protorpc import messages
 from google.appengine.ext import ndb
 
-# Finish updated game and dice classes
+# Will maybe someday split this up into different files.
 
 
 class User(ndb.Model):

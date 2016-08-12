@@ -68,7 +68,15 @@ class LiarsDiceApi(remote.Service):
                       http_method='POST')
     def new_game(self, request):
         """Creates new game"""
+        # check for user uniquness
+        user_bucket = []
+
         for user in request.users:
+            if user in user_bucket:
+                raise endpoints.BadRequestException('A user cannot be represented '
+                                              'more than once.')
+            else:
+                user_bucket.append(user)
             if not User.query(User.user_name == user).get():
                 raise endpoints.NotFoundException(
                     'A User with the name %s does not exist!'
@@ -91,11 +99,17 @@ class LiarsDiceApi(remote.Service):
         """Return the current game state."""
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         if game:
-            bidding_player = Player.query(
-                Player.game == game.key,
-                Player.order == (game.bid_player) % game.players + 1).get()
-            return game.to_form('It\'s %s\'s turn!' %
-                                (bidding_player.user.get().user_name))
+            if game.cancelled:
+                return game.to_form('Game has been cancelled.')
+            elif game.game_over:
+                return game.to_form('Game is over. %d won.' % 
+                                    (game.winner.get().user_name))
+            else:            
+                bidding_player = Player.query(
+                    Player.game == game.key,
+                    Player.order == (game.bid_player) % game.players + 1).get()
+                return game.to_form('It\'s %s\'s turn!' %
+                                    (bidding_player.user.get().user_name))
         else:
             raise endpoints.NotFoundException('Game not found!')
 
@@ -146,8 +160,11 @@ class LiarsDiceApi(remote.Service):
         # Maybe will add a drop feature instead someday to prevent rage quits.
         # Idea: would be a Player field
         if game:
-            game.cancel = True
-            game.put()
+            if game.game_over or game.cancelled:
+                return game.to_form('Game already over!')
+            else:
+                game.cancelled = True
+                game.put()
             return game.to_form('Game cancelled.')
         else:
             raise endpoints.NotFoundException('Game not found!')
@@ -159,6 +176,7 @@ class LiarsDiceApi(remote.Service):
                       http_method='GET')
     def get_dice(self, request):
         """Returns a player's dice."""
+        # Can still use if game is over or cancelled for historical purposes
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
         user = User.query(User.user_name == request.user_name).get()
         if game:
@@ -325,16 +343,18 @@ class LiarsDiceApi(remote.Service):
                     dice_total += die.total
 
             # Score logic
-            score_user = player.user.get()
-            score = Score.query(Score.user == score_user.key).get()
-            if score:
-                score.games += 1
-            else:
-                score = Score(user=score_user.key,
-                              games=1,
-                              wins=0,
-                              score=0)
-            score.put()
+            # Prevent score for being raised if playing against self
+            if players.count() > 1:
+                score_user = player.user.get()
+                score = Score.query(Score.user == score_user.key).get()
+                if score:
+                    score.games += 1
+                else:
+                    score = Score(user=score_user.key,
+                                  games=1,
+                                  wins=0,
+                                  score=0)
+                score.put()
 
         message = ('For a face of %d: real total - %d, bid total - %d. ' %
                    (game.bid_face, dice_total, game.bid_total))
@@ -352,11 +372,13 @@ class LiarsDiceApi(remote.Service):
         game.winner = winner
 
         # Add score to winner
-        winner_score = Score.query(Score.user == winner).get()
-        winner_score.wins += 1
-        winner_score.score += game.turn
+        # Prevent score for being raised if playing against self
+        if players.count() > 1:
+            winner_score = Score.query(Score.user == winner).get()
+            winner_score.wins += 1
+            winner_score.score += game.turn
 
-        winner_score.put()
+            winner_score.put()
         game.put()
         return game.to_form(message)
 
@@ -392,7 +414,7 @@ class LiarsDiceApi(remote.Service):
         forms = ScoreForms()
         forms.scores = []
         rank = 1
-        if scores:
+        if scores.count() > 0:
             for score in scores:
                 forms.scores.append(score.to_form(rank))
                 rank += 1

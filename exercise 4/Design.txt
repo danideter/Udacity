@@ -12,3 +12,7 @@ The one to many relationships between games, players, and dice made it straight 
 Since liars dice is such an important game of information, I would like to one day return and make email notifications for when a game
 is created notifying users of what dice they have. Additionally, more controls to prevent users from abusing the game system is much
 desired. For instance, there's nothing from preventing a user from playing a game against him or herself and falsifying a high score.
+
+Another challenge was adding the "cancel game" feature. Just completely cancelling a game can lead to rage quits, and depending on the
+circumstances, it's difficult figuring out if someone should be awarded score points or not. A better feature would be a drop player
+option. This way the remaining players can keep playing the game and a winner can still be awarded points. 
