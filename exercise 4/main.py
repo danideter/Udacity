@@ -8,11 +8,13 @@ import webapp2
 from google.appengine.api import mail, app_identity
 from api import LiarsDiceApi
 
+from models import User, Game, Player
 
-class SendReminderEmail(webapp2.RequestHandler):
+
+class SendYourTurnEmail(webapp2.RequestHandler):
     def post(self):
-        """Send a reminder email to a user about the game.
-        Called every day using a cron job"""
+        """Send a turn notification email to a user about the game.
+        Called when a user completes a turn"""
         app_id = app_identity.get_application_id()
         subject = 'It''s your turn on Liar\'s Dice.'
         body = (
@@ -34,6 +36,32 @@ class SendReminderEmail(webapp2.RequestHandler):
                        body)
 
 
+class SendReminderEmail(webapp2.RequestHandler):
+    def get(self):
+        """Send a reminder email to each User with an email about games.
+        Called every 24 hours using a cron job"""
+        app_id = app_identity.get_application_id()
+        games = Game.query(Game.game_over == False, Game.cancelled == False)
+        for game in games:
+            player = Player.query(
+                Player.game == game.key,
+                Player.order == game.bid_player % game.players + 1).get()
+
+            user = player.user.get()
+            if user.email is not None:
+                subject = 'Liar\'s Dice Reminder!'
+                body = ('Hello {}, your oppoents are waiting in game {}.'
+                        .format(user.user_name, game.key.urlsafe()))
+                body += '\n\nYour password: {}'.format(user.password)
+                # This will send test emails, the arguments to send_mail are:
+                # from, to, subject, body
+                mail.send_mail('noreply@{}.appspotmail.com'.format(app_id),
+                               user.email,
+                               subject,
+                               body)
+
+
 app = webapp2.WSGIApplication([
-    ('/tasks/send_reminder', SendReminderEmail),
+    ('/crons/send_reminder', SendReminderEmail),
+    ('/tasks/send_your_turn', SendYourTurnEmail),
 ], debug=True)

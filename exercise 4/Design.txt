@@ -16,3 +16,5 @@ desired. For instance, there's nothing from preventing a user from playing a gam
 Another challenge was adding the "cancel game" feature. Just completely cancelling a game can lead to rage quits, and depending on the
 circumstances, it's difficult figuring out if someone should be awarded score points or not. A better feature would be a drop player
 option. This way the remaining players can keep playing the game and a winner can still be awarded points. 
+
+Another desire would be to add OAuth when users want to make a move. It's much more secure than my simple system.

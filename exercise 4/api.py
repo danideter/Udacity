@@ -13,8 +13,16 @@ from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 
 from models import User, Game, GameHistory, Player, Dice, Score
-from models import StringMessage, NewGameForm, GameForm, GameForms, \
-    RaiseBidForm, DiceForms, GameHistoryForm, GameHistoryForms, ScoreForms
+from models import (
+    StringMessage,
+    NewGameForm,
+    GameForm,
+    GameForms,
+    RaiseBidForm,
+    DiceForms,
+    GameHistoryForm,
+    GameHistoryForms,
+    ScoreForms)
 from utils import get_by_urlsafe
 
 NEW_GAME_REQUEST = endpoints.ResourceContainer(NewGameForm)
@@ -37,7 +45,6 @@ USER_REQUEST = endpoints.ResourceContainer(
     user_name=messages.StringField(1),
     email=messages.StringField(2),
     password=messages.StringField(3),)
-VOID_REQUEST = endpoints.ResourceContainer()
 
 
 @endpoints.api(name='liars_dice', version='v1')
@@ -73,8 +80,9 @@ class LiarsDiceApi(remote.Service):
 
         for user in request.users:
             if user in user_bucket:
-                raise endpoints.BadRequestException('A user cannot be represented '
-                                              'more than once.')
+                raise endpoints.BadRequestException('A user cannot be '
+                                                    'represented more than '
+                                                    'once.')
             else:
                 user_bucket.append(user)
             if not User.query(User.user_name == user).get():
@@ -102,9 +110,9 @@ class LiarsDiceApi(remote.Service):
             if game.cancelled:
                 return game.to_form('Game has been cancelled.')
             elif game.game_over:
-                return game.to_form('Game is over. %d won.' % 
+                return game.to_form('Game is over. %s won.' %
                                     (game.winner.get().user_name))
-            else:            
+            else:
                 bidding_player = Player.query(
                     Player.game == game.key,
                     Player.order == (game.bid_player) % game.players + 1).get()
@@ -153,7 +161,7 @@ class LiarsDiceApi(remote.Service):
                       response_message=GameForm,
                       path='cancel/{urlsafe_game_key}',
                       name='cancel_game',
-                      http_method='GET')
+                      http_method='PUT')
     def cancel_game(self, request):
         """Cancels a game."""
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
@@ -272,20 +280,21 @@ class LiarsDiceApi(remote.Service):
 
         next_user = next_player.user.get()
 
-        task_params = ({
-            'email': next_user.email,
-            'user_name': next_user.user_name,
-            'game_key': game.key.urlsafe(),
-            'dice': Dice.query(Dice.player == next_player.key)
-                        .order(Dice.face),
-            'bid_face': game.bid_face,
-            'bid_total': game.bid_total,
-            'bid_player': bidding_user.user_name})
+        if next_user.email is not None:
+            task_params = ({
+                'email': next_user.email,
+                'user_name': next_user.user_name,
+                'game_key': game.key.urlsafe(),
+                'dice': Dice.query(Dice.player == next_player.key)
+                            .order(Dice.face),
+                'bid_face': game.bid_face,
+                'bid_total': game.bid_total,
+                'bid_player': bidding_user.user_name})
 
-        taskqueue.add(
-            params=task_params,
-            url='/tasks/send_reminder'
-        )
+            taskqueue.add(
+                params=task_params,
+                url='/tasks/send_your_turn'
+            )
 
         return game.to_form('Current bid is now face: %d, number %d. It is '
                             '%s\'s turn.' % (request.bid_face,
@@ -296,7 +305,7 @@ class LiarsDiceApi(remote.Service):
                       response_message=GameForm,
                       path='liar/{urlsafe_game_key}',
                       name='call_liar',
-                      http_method='GET')
+                      http_method='PUT')
     def call_liar(self, request):
         """Returns a player's dice."""
         game = get_by_urlsafe(request.urlsafe_game_key, Game)
@@ -307,7 +316,7 @@ class LiarsDiceApi(remote.Service):
 
         if game.turn < 1:
             return game.to_form(
-                'At least one turn must pass befire calling liar.')
+                'At least one turn must pass before calling liar.')
 
         # Get players of interest
         bidding_player = Player.query(
@@ -374,7 +383,7 @@ class LiarsDiceApi(remote.Service):
         # Add score to winner
         # Prevent score for being raised if playing against self
         if players.count() > 1:
-            winner_score = Score.query(Score.user == winner).get()
+            winner_score = Score.query(Score.user == game.winner).get()
             winner_score.wins += 1
             winner_score.score += game.turn
 
@@ -401,8 +410,7 @@ class LiarsDiceApi(remote.Service):
         else:
             raise endpoints.NotFoundException('Game not found!')
 
-    @endpoints.method(request_message=VOID_REQUEST,
-                      response_message=ScoreForms,
+    @endpoints.method(response_message=ScoreForms,
                       path='rank',
                       name='get_user_rankings',
                       http_method='GET')

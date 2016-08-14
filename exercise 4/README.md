@@ -48,6 +48,12 @@ Dice Total = 4
 
 Player 2 was telling the truth! Player 2 wins!
 
+##Scoring:
+When a game is completed, the total number of turns is added to the player's 
+alltime score. This means games that have more players and dice that tend to
+last longer are worth more score points. Of course, that also means players
+must keep playing if they want to have the top score!
+
 
 A version of the game has been deployed to piratesdicegame.appspot.com
 
